@@ -6,6 +6,7 @@ import { chat } from "@/lib/llm";
 import { textToSpeech } from "@/lib/tts";
 import { db } from "@/lib/db";
 import { extractMemories, buildMemoryContext } from "@/lib/memory";
+import { checkRateLimit, incrementMessageCount } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,15 @@ export async function POST(req: NextRequest) {
   const user = await db.user.findUnique({ where: { email: session.user.email } });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  // Rate limit check
+  const rateCheck = await checkRateLimit(user.id);
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Daily message limit reached. Subscribe for unlimited messages.", remaining: 0 },
+      { status: 429 }
+    );
   }
 
   // Determine language: use user preference
@@ -101,11 +111,15 @@ export async function POST(req: NextRequest) {
     // Chat still works without audio
   }
 
+  // Increment user's daily message count
+  await incrementMessageCount(user.id);
+
   return NextResponse.json({
     id: savedMsg.id,
     role: "assistant",
     content: reply,
     audioUrl,
     createdAt: savedMsg.createdAt.toISOString(),
+    remaining: rateCheck.remaining - 1,
   });
 }
