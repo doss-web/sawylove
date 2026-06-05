@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { CHARACTERS } from "@/prompts/characters";
 import { chat } from "@/lib/llm";
+import { textToSpeech } from "@/lib/tts";
 import { db } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
@@ -70,11 +71,20 @@ export async function POST(req: NextRequest) {
     data: { sessionId: chatSession.id, role: "assistant", content: reply },
   });
 
+  // Generate TTS audio
+  let audioUrl: string | null = null;
+  try {
+    audioUrl = await textToSpeech(reply);
+  } catch (e) {
+    console.error("TTS failed:", e);
+    // Chat still works without audio
+  }
+
   return NextResponse.json({
     id: savedMsg.id,
     role: "assistant",
     content: reply,
-    audioUrl: null, // wired in Task 8
+    audioUrl,
     createdAt: savedMsg.createdAt.toISOString(),
   });
 }
