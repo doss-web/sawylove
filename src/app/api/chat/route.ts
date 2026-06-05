@@ -58,6 +58,32 @@ export async function POST(req: NextRequest) {
   // Full system prompt
   const fullPrompt = systemPrompt + "\n\n" + memoryContext;
 
+  // Moderation check — LLM-based NSFW filter
+  const MODERATION_PROMPT = "Determine if the following user message is sexually explicit, pornographic, or NSFW. Answer ONLY \"yes\" or \"no\".";
+
+  const modCheck = await chat({
+    systemPrompt: MODERATION_PROMPT,
+    messages: [{ role: "user", content: message }],
+    maxTokens: 5,
+  });
+
+  if (modCheck.toLowerCase().trim().startsWith("yes")) {
+    // Save the user message but respond with a deflection
+    await db.message.create({
+      data: { sessionId: chatSession!.id, role: "user", content: message },
+    });
+    const deflection = lang === "zh"
+      ? "我更想好好了解你这个人。聊点别的吧？😊"
+      : "I'd rather get to know the real you. Let's talk about something else? 😊";
+    return NextResponse.json({
+      id: "",
+      role: "assistant",
+      content: deflection,
+      audioUrl: null,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   // Get recent message history (last 20 messages)
   const recentMessages = await db.message.findMany({
     where: { sessionId: chatSession.id },
