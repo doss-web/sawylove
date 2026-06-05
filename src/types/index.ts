@@ -1,3 +1,5 @@
+import { DefaultSession } from "next-auth";
+
 export interface CharacterData {
   id: string;
   slug: string;
@@ -24,4 +26,14 @@ export interface MemoryContext {
   mood: string | null;
   stage: string;
   summary: string | null;
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      isSubscribed: boolean;
+      language: string;
+    } & DefaultSession["user"];
+  }
 }
