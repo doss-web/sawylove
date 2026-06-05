@@ -5,6 +5,7 @@ import { CHARACTERS } from "@/prompts/characters";
 import { chat } from "@/lib/llm";
 import { textToSpeech } from "@/lib/tts";
 import { db } from "@/lib/db";
+import { extractMemories, buildMemoryContext } from "@/lib/memory";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -41,8 +42,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Build memory context (stub — enhanced in Task 9)
-  const memoryContext = "";
+  // Build memory context from stored facts
+  const memoryContext = await buildMemoryContext(user.id, characterId);
 
   // Full system prompt
   const fullPrompt = systemPrompt + "\n\n" + memoryContext;
@@ -70,6 +71,26 @@ export async function POST(req: NextRequest) {
   const savedMsg = await db.message.create({
     data: { sessionId: chatSession.id, role: "assistant", content: reply },
   });
+
+  // Fire-and-forget memory extraction (don't block response)
+  extractMemories(message, reply, []).then(async (result) => {
+    // Save new facts
+    for (const fact of result.newFacts) {
+      await db.userMemory.upsert({
+        where: { userId_key: { userId: user.id, key: fact.key } },
+        update: { value: fact.value },
+        create: { userId: user.id, key: fact.key, value: fact.value },
+      });
+    }
+    // Update session
+    await db.chatSession.update({
+      where: { id: chatSession!.id },
+      data: {
+        mood: result.mood || undefined,
+        stage: result.stageUpdate || undefined,
+      },
+    });
+  }).catch(e => console.error("Memory extraction failed:", e));
 
   // Generate TTS audio
   let audioUrl: string | null = null;
