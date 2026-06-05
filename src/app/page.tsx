@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import CharacterGrid from "@/components/CharacterGrid";
 import AuthButton from "@/components/AuthButton";
+import LanguageSwitch from "@/components/LanguageSwitch";
 import Link from "next/link";
 
 async function getCharacters() {
@@ -22,6 +23,7 @@ export default async function HomePage() {
         <Link href="/" className="text-xl font-bold text-rose-500">
           💕 {lang === "zh" ? "纸片人男友" : "Paper Boyfriend"}
         </Link>
+        <LanguageSwitch />
         <AuthButton />
       </header>
 
