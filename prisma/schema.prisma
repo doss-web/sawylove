@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String?       @unique
+  name             String?
+  image            String?
+  language         String        @default("en")
+  isSubscribed     Boolean       @default(false)
+  stripeCustomerId String?
+  subscriptionEnd  DateTime?
+  dailyMsgCount    Int           @default(0)
+  msgCountDate     DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+
+  memories     UserMemory[]
+  chatSessions ChatSession[]
+}
+
+model Character {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  nameEn         String
+  nameZh         String
+  taglineEn      String
+  taglineZh      String
+  descriptionEn  String   @db.Text
+  descriptionZh  String   @db.Text
+  avatarUrl      String
+  systemPromptEn String   @db.Text
+  systemPromptZh String   @db.Text
+  isFree         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model UserMemory {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+model ChatSession {
+  id          String    @id @default(cuid())
+  userId      String
+  characterId String
+  summary     String?   @db.Text
+  mood        String?
+  stage       String?   @default("acquaintance")
+  updatedAt   DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([userId, characterId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String
+  content   String   @db.Text
+  audioUrl  String?
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
