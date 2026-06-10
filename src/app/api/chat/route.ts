@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { CHARACTERS } from "@/prompts/characters";
 import { chat } from "@/lib/llm";
 import { textToSpeech } from "@/lib/tts";
@@ -9,7 +9,9 @@ import { extractMemories, buildMemoryContext } from "@/lib/memory";
 import { checkRateLimit, incrementMessageCount } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -67,7 +69,8 @@ export async function POST(req: NextRequest) {
     maxTokens: 5,
   });
 
-  if (modCheck.toLowerCase().trim().startsWith("yes")) {
+  const isNSFW = modCheck.toLowerCase().trim().replace(/[^a-z]/g, "");
+  if (isNSFW === "yes") {
     // Save the user message but respond with a deflection
     await db.message.create({
       data: { sessionId: chatSession!.id, role: "user", content: message },
@@ -108,33 +111,75 @@ export async function POST(req: NextRequest) {
     data: { sessionId: chatSession.id, role: "assistant", content: reply },
   });
 
-  // Fire-and-forget memory extraction (don't block response)
-  extractMemories(message, reply, []).then(async (result) => {
-    // Save new facts
-    for (const fact of result.newFacts) {
-      await db.userMemory.upsert({
-        where: { userId_key: { userId: user.id, key: fact.key } },
-        update: { value: fact.value },
-        create: { userId: user.id, key: fact.key, value: fact.value },
+  // Fire-and-forget memory extraction — batched: every 10 msgs or 5 min idle
+  (async () => {
+    try {
+      // Count unprocessed messages since last extraction
+      const unprocessedCount = await db.message.count({
+        where: {
+          sessionId: chatSession.id,
+          createdAt: { gt: chatSession.lastMemoryExtractionAt || chatSession.createdAt },
+        },
       });
-    }
-    // Update session
-    await db.chatSession.update({
-      where: { id: chatSession!.id },
-      data: {
-        mood: result.mood || undefined,
-        stage: result.stageUpdate || undefined,
-      },
-    });
-  }).catch(e => console.error("Memory extraction failed:", e));
 
-  // Generate TTS audio
+      // Find the oldest unprocessed message for idle check
+      const oldestUnprocessed = unprocessedCount > 0
+        ? await db.message.findFirst({
+            where: {
+              sessionId: chatSession.id,
+              createdAt: { gt: chatSession.lastMemoryExtractionAt || chatSession.createdAt },
+            },
+            orderBy: { createdAt: "asc" },
+            select: { createdAt: true },
+          })
+        : null;
+
+      const minutesSinceOldest = oldestUnprocessed
+        ? (Date.now() - oldestUnprocessed.createdAt.getTime()) / 60000
+        : 0;
+
+      const shouldExtract = unprocessedCount >= 10 || (unprocessedCount > 0 && minutesSinceOldest >= 5);
+
+      if (!shouldExtract) return;
+
+      // Do the extraction
+      const previousFacts = await db.userMemory.findMany({ where: { userId: user.id, characterId } });
+      const result = await extractMemories(message, reply, previousFacts.map(f => ({ key: f.key, value: f.value })));
+
+      for (const fact of result.newFacts) {
+        const existing = await db.userMemory.findFirst({
+          where: { userId: user.id, characterId, key: fact.key },
+        });
+        if (existing) {
+          await db.userMemory.update({ where: { id: existing.id }, data: { value: fact.value } });
+        } else {
+          await db.userMemory.create({ data: { userId: user.id, characterId, key: fact.key, value: fact.value } });
+        }
+      }
+
+      await db.chatSession.update({
+        where: { id: chatSession!.id },
+        data: {
+          mood: result.mood || undefined,
+          stage: result.stageUpdate || undefined,
+          summary: result.summary || undefined,
+          lastMemoryExtractionAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error("Memory extraction failed:", e);
+    }
+  })();
+
+  // TTS — Edge-TTS is fast (~1s), synchronous is fine
   let audioUrl: string | null = null;
   try {
-    audioUrl = await textToSpeech(reply);
+    audioUrl = await textToSpeech(reply, lang as "en" | "zh");
+    // Save audio URL to message for history
+    await db.message.update({ where: { id: savedMsg.id }, data: { audioUrl } });
   } catch (e) {
     console.error("TTS failed:", e);
-    // Chat still works without audio
+    // Chat works without audio
   }
 
   // Increment user's daily message count

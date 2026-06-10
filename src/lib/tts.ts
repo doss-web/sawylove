@@ -1,25 +1,45 @@
-import OpenAI from "openai";
+import { EdgeTTS } from "node-edge-tts";
+import { writeFileSync, readFileSync, unlinkSync, existsSync, mkdirSync } from "fs";
+import { join } from "path";
+import { randomUUID } from "crypto";
+import { uploadAudio } from "@/lib/storage";
 
-const ttsClient = new OpenAI({
-  apiKey: process.env.TTS_API_KEY || process.env.LLM_API_KEY!,
-  baseURL: process.env.TTS_BASE_URL || process.env.LLM_BASE_URL || "https://api.openai.com/v1",
-});
+// Male voices suitable for a boyfriend character
+const VOICE_EN = "en-US-GuyNeural";       // Natural, conversational male
+const VOICE_ZH = "zh-CN-YunyangNeural";   // 云扬 — warm, sunny male voice
 
-const TTS_MODEL = process.env.TTS_MODEL || "tts-1";
-const TTS_VOICE = process.env.TTS_VOICE || "alloy";
+// Temp directory for audio files
+const TMP_DIR = join(process.cwd(), ".tmp");
+if (!existsSync(TMP_DIR)) {
+  try { mkdirSync(TMP_DIR, { recursive: true }); } catch {}
+}
 
-export async function textToSpeech(text: string): Promise<string> {
-  // Trim text for TTS — take first 200 chars to keep it snappy
-  const ttsText = text.length > 200 ? text.slice(0, 200) + "..." : text;
+// Trim text to keep it snappy — Edge TTS handles longer text well
+function trimText(text: string, maxChars = 300): string {
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars - 3).replace(/\s+\S*$/, "") + "...";
+}
 
-  const response = await ttsClient.audio.speech.create({
-    model: TTS_MODEL,
-    voice: TTS_VOICE as any,
-    input: ttsText,
-    response_format: "mp3",
+export async function textToSpeech(text: string, lang?: "en" | "zh"): Promise<string> {
+  const voice = lang === "zh" ? VOICE_ZH : VOICE_EN;
+  const ttsText = trimText(text);
+  const outputPath = join(TMP_DIR, `tts-${randomUUID()}.mp3`);
+
+  const tts = new EdgeTTS({
+    voice,
+    lang: lang === "zh" ? "zh-CN" : "en-US",
+    outputFormat: "audio-24khz-96kbitrate-mono-mp3",
+    timeout: 15000,
   });
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  const base64 = buffer.toString("base64");
-  return `data:audio/mp3;base64,${base64}`;
+  await tts.ttsPromise(ttsText, outputPath);
+
+  const buffer = readFileSync(outputPath);
+
+  // Clean up temp file
+  try { unlinkSync(outputPath); } catch {}
+
+  // Upload to Supabase Storage and return public URL
+  const fileName = `tts-${randomUUID()}.mp3`;
+  return await uploadAudio(buffer, fileName);
 }

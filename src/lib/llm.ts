@@ -12,12 +12,13 @@ interface ChatParams {
   systemPrompt: string;
   messages: { role: "user" | "assistant"; content: string }[];
   maxTokens?: number;
+  temperature?: number;
 }
 
-export async function chat({ systemPrompt, messages, maxTokens = 500 }: ChatParams): Promise<string> {
+export async function chat({ systemPrompt, messages, maxTokens = 500, temperature = 0.9 }: ChatParams): Promise<string> {
   const response = await client.chat.completions.create({
     model: MODEL,
-    temperature: 0.9,
+    temperature,
     max_tokens: maxTokens,
     messages: [
       { role: "system", content: systemPrompt },

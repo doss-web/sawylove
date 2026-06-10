@@ -1,43 +1,21 @@
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
+import "./proxy"; // Must be first — sets up global proxy for Google OAuth
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/db";
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
+export const auth = betterAuth({
+  database: prismaAdapter(db, {
+    provider: "postgresql",
+  }),
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders: {
+    google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-  ],
-  callbacks: {
-    async signIn({ user }) {
-      if (!user.email) return false;
-      // Upsert user on login
-      await db.user.upsert({
-        where: { email: user.email },
-        update: { name: user.name, image: user.image },
-        create: { email: user.email, name: user.name, image: user.image },
-      });
-      return true;
-    },
-    async session({ session }) {
-      if (session.user?.email) {
-        const dbUser = await db.user.findUnique({ where: { email: session.user.email } });
-        if (dbUser) {
-          (session.user as any).id = dbUser.id;
-          (session.user as any).isSubscribed = dbUser.isSubscribed;
-          (session.user as any).language = dbUser.language;
-        }
-      }
-      return session;
     },
   },
-  pages: {
-    signIn: "/login",
-  },
-};
+  plugins: [nextCookies()],
+});

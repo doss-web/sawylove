@@ -5,6 +5,7 @@ const EXTRACTION_PROMPT = `Extract key facts about the user from this conversati
 - "newFacts": array of {key, value} for new or updated information about the user (name, age, job, hobbies, likes, dislikes, important life events, relationships, mood, etc.)
 - "mood": the user's current emotional state (one word or short phrase)
 - "stageUpdate": the relationship stage, one of: "acquaintance", "getting_to_know", "flirting", "dating", "close", "deep"
+- "summary": a 1-2 sentence summary of this conversation turn, capturing the most meaningful exchange
 
 Only include facts explicitly mentioned. If nothing new, return empty arrays. Respond with ONLY valid JSON, no explanation.`;
 
@@ -12,6 +13,7 @@ interface ExtractionResult {
   newFacts: { key: string; value: string }[];
   mood: string;
   stageUpdate: string;
+  summary: string;
 }
 
 export async function extractMemories(
@@ -28,10 +30,11 @@ export async function extractMemories(
     messages: [
       {
         role: "user",
-        content: `${factsContext}\n\nUser's message: "${userMessage}"\nAI's reply: "${aiReply}"\n\nExtract new/updated facts, mood, and relationship stage.`,
+        content: `${factsContext}\n\nUser's message: "${userMessage}"\nAI's reply: "${aiReply}"\n\nExtract new/updated facts, mood, relationship stage, and summary.`,
       },
     ],
     maxTokens: 500,
+    temperature: 0.3,
   });
 
   try {
@@ -41,14 +44,19 @@ export async function extractMemories(
       newFacts: json.newFacts || [],
       mood: json.mood || "",
       stageUpdate: json.stageUpdate || "",
+      summary: json.summary || "",
     };
   } catch {
-    return { newFacts: [], mood: "", stageUpdate: "" };
+    return { newFacts: [], mood: "", stageUpdate: "", summary: "" };
   }
 }
 
 export async function buildMemoryContext(userId: string, characterId: string): Promise<string> {
-  const memories = await db.userMemory.findMany({ where: { userId } });
+  const memories = await db.userMemory.findMany({
+    where: { userId, characterId },
+    orderBy: { updatedAt: "desc" },
+    take: 30,
+  });
   const session = await db.chatSession.findUnique({ where: { userId_characterId: { userId, characterId } } });
 
   const factsText = memories.map(m => `- ${m.key}: ${m.value}`).join("\n");

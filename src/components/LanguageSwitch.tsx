@@ -1,24 +1,33 @@
 "use client";
-import { useSession } from "next-auth/react";
 
-export default function LanguageSwitch() {
-  const { data: session, update } = useSession();
-  const lang = (session?.user as any)?.language || "en";
+interface LanguageSwitchProps {
+  lang?: "en" | "zh";
+  loggedIn?: boolean;
+}
 
+export default function LanguageSwitch({ lang = "en", loggedIn = false }: LanguageSwitchProps) {
   const toggleLang = async () => {
     const newLang = lang === "en" ? "zh" : "en";
-    await fetch("/api/user/language", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language: newLang }),
-    });
-    update();
+
+    if (loggedIn) {
+      // Authenticated: save to DB via API
+      await fetch("/api/user/language", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: newLang }),
+      });
+    } else {
+      // Unauthenticated: save to cookie
+      document.cookie = `NEXT_LOCALE=${newLang}; path=/; max-age=31536000`;
+    }
+
+    window.location.reload();
   };
 
   return (
     <button
       onClick={toggleLang}
-      className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded border border-gray-200"
+      className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] px-3 py-1.5 rounded-full border border-[var(--border-subtle)] glass text-sm transition-colors duration-200 cursor-pointer"
     >
       {lang === "en" ? "中文" : "English"}
     </button>
