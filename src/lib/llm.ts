@@ -4,6 +4,8 @@ import OpenAI from "openai";
 const client = new OpenAI({
   apiKey: process.env.LLM_API_KEY!,
   baseURL: process.env.LLM_BASE_URL || "https://api.openai.com/v1",
+  timeout: 30000, // 30s timeout — prevent hanging requests
+  maxRetries: 1,
 });
 
 const MODEL = process.env.LLM_MODEL || "gpt-4o-mini";

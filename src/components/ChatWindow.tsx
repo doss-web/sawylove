@@ -11,18 +11,32 @@ export default function ChatWindow({ characterId, characterName }: { characterId
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const [error, setError] = useState("");
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const sendMessage = async (text: string) => {
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: text, createdAt: new Date().toISOString() };
+    const tempId = Date.now().toString();
+    const userMsg: ChatMessage = { id: tempId, role: "user", content: text, createdAt: new Date().toISOString() };
     setMessages(prev => [...prev, userMsg]);
+    setError("");
     setLoading(true);
     try {
       const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ characterId, message: text }) });
       const data = await res.json();
-      if (data.error) { alert(data.error); return; }
+      if (data.error) {
+        // Roll back optimistic message
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setError(data.error);
+        return;
+      }
       setMessages(prev => [...prev, data]);
-    } catch (err) { console.error("Chat error:", err); }
+    } catch (err) {
+      // Roll back optimistic message on network error
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setError("Network error. Please try again.");
+      console.error("Chat error:", err);
+    }
     finally { setLoading(false); }
   };
 
@@ -45,6 +59,11 @@ export default function ChatWindow({ characterId, characterName }: { characterId
           </div>
         )}
         {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
+        {error && (
+          <div className="flex justify-center mb-4">
+            <span className="text-xs text-[var(--accent-rose)] bg-[var(--accent-rose)]/10 px-4 py-2 rounded-full">{error}</span>
+          </div>
+        )}
         {loading && <SkeletonMessage />}
         <div ref={bottomRef} />
       </div>

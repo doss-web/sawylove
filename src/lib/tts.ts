@@ -39,6 +39,11 @@ export async function textToSpeech(text: string, lang?: "en" | "zh"): Promise<st
   // Clean up temp file
   try { unlinkSync(outputPath); } catch {}
 
+  // Guard against empty audio (Edge TTS network errors may produce empty files)
+  if (!buffer || buffer.length === 0) {
+    throw new Error("TTS generated empty audio");
+  }
+
   // Upload to Supabase Storage and return public URL
   const fileName = `tts-${randomUUID()}.mp3`;
   return await uploadAudio(buffer, fileName);

@@ -6,7 +6,7 @@ import { chat } from "@/lib/llm";
 import { textToSpeech } from "@/lib/tts";
 import { db } from "@/lib/db";
 import { extractMemories, buildMemoryContext } from "@/lib/memory";
-import { checkRateLimit, incrementMessageCount } from "@/lib/rate-limit";
+import { checkAndIncrementRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({
@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
   if (!characterId || !message?.trim()) {
     return NextResponse.json({ error: "Missing characterId or message" }, { status: 400 });
   }
+  if (message.length > 2000) {
+    return NextResponse.json({ error: "Message too long. Please keep it under 2000 characters." }, { status: 400 });
+  }
 
   const character = CHARACTERS.find(c => c.slug === characterId);
   if (!character) {
@@ -31,8 +34,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Rate limit check
-  const rateCheck = await checkRateLimit(user.id);
+  // Rate limit check — atomic check + increment prevents race condition
+  const rateCheck = await checkAndIncrementRateLimit(user.id);
   if (!rateCheck.allowed) {
     return NextResponse.json(
       { error: "Daily message limit reached. Subscribe for unlimited messages.", remaining: 0 },
@@ -76,8 +79,8 @@ export async function POST(req: NextRequest) {
       data: { sessionId: chatSession!.id, role: "user", content: message },
     });
     const deflection = lang === "zh"
-      ? "我更想好好了解你这个人。聊点别的吧？😊"
-      : "I'd rather get to know the real you. Let's talk about something else? 😊";
+      ? "我更想好好了解你这个人。聊点别的吧？"
+      : "I'd rather get to know the real you. Let's talk about something else?";
     return NextResponse.json({
       id: "",
       role: "assistant",
@@ -142,6 +145,13 @@ export async function POST(req: NextRequest) {
 
       if (!shouldExtract) return;
 
+      // Lock the extraction window immediately to prevent concurrent duplicate extraction
+      const extractionTime = new Date();
+      await db.chatSession.update({
+        where: { id: chatSession!.id },
+        data: { lastMemoryExtractionAt: extractionTime },
+      });
+
       // Do the extraction
       const previousFacts = await db.userMemory.findMany({ where: { userId: user.id, characterId } });
       const result = await extractMemories(message, reply, previousFacts.map(f => ({ key: f.key, value: f.value })));
@@ -163,7 +173,6 @@ export async function POST(req: NextRequest) {
           mood: result.mood || undefined,
           stage: result.stageUpdate || undefined,
           summary: result.summary || undefined,
-          lastMemoryExtractionAt: new Date(),
         },
       });
     } catch (e) {
@@ -182,15 +191,12 @@ export async function POST(req: NextRequest) {
     // Chat works without audio
   }
 
-  // Increment user's daily message count
-  await incrementMessageCount(user.id);
-
   return NextResponse.json({
     id: savedMsg.id,
     role: "assistant",
     content: reply,
     audioUrl,
     createdAt: savedMsg.createdAt.toISOString(),
-    remaining: rateCheck.remaining - 1,
+    remaining: rateCheck.remaining,
   });
 }

@@ -44,6 +44,11 @@ export async function POST(req: NextRequest) {
   if (!email.includes("@") || !email.includes(".")) {
     return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
   }
+  // Validate & sanitize name
+  if (name && (typeof name !== "string" || name.length > 50)) {
+    return NextResponse.json({ error: "Name must be under 50 characters" }, { status: 400 });
+  }
+  const safeName = name ? name.trim().slice(0, 50) : undefined;
 
   // Check if user already exists
   const existing = await db.user.findUnique({ where: { email } });
@@ -56,7 +61,7 @@ export async function POST(req: NextRequest) {
   const user = await db.user.create({
     data: {
       email,
-      name: name || email.split("@")[0],
+      name: safeName || email.split("@")[0],
       accounts: {
         create: {
           providerId: "credential",
