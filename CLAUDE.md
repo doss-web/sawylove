@@ -34,15 +34,17 @@ npx tsc --noEmit     # 仅类型检查
 `POST /api/chat` — every user message flows through:
 
 ```
-Auth → Validate → Rate limit → Memory context → NSFW check → LLM chat → Save reply → TTS (sync) → Save audioUrl → (async) Memory extraction → Increment count → Response
+Auth → Validate (max 2000 chars) → Rate limit (atomic) → Memory context → NSFW check → LLM chat (30s timeout) → Save reply → TTS (sync) → Save audioUrl → (async) Memory extraction → Response
 ```
 
 Key behaviors:
-- **Rate limit** checked BEFORE LLM call (save cost on blocked requests). Free: 50 msgs/day, subscribers: unlimited.
+- **Rate limit 原子化 (2026-06-10)** — `checkAndIncrementRateLimit` 将检查+递增合并为一次原子操作 (`updateMany` + `WHERE dailyMsgCount < 50`)，消除并发竞态。免费: 50 条/天，订阅: 无限。
 - **NSFW moderation** uses a cheap LLM call (maxTokens:5). Exact "yes" match only (non-alpha chars stripped first to avoid false positives on "yesterday" etc.)
-- **TTS is synchronous** — `node-edge-tts` (~1s) generates audio before response. Failure caught silently (chat works without audio).
-- **Memory extraction** is fire-and-forget, **batched** — only triggered every 10 messages or after 5 minutes of idle (2026-06-08, was every-message). Tracks via `ChatSession.lastMemoryExtractionAt`.
-- **Message count** increments only after successful reply
+- **LLM 超时 (2026-06-10)** — OpenAI client 设 `timeout: 30000` (30s) + `maxRetries: 1`，防止 DeepSeek 挂死时请求永久挂起。
+- **TTS is synchronous** — `node-edge-tts` (~1s) generates audio before response. Failure caught silently (chat works without audio). **2026-06-10**: 加空 buffer 检测，Edge TTS 网络异常产空文件时抛异常不传播。
+- **Memory extraction** is fire-and-forget, **batched** — only triggered every 10 messages or after 5 minutes of idle (2026-06-08). **2026-06-10**: 提取前先更新 `lastMemoryExtractionAt` 锁窗口，防止并发重复提取。
+- **消息长度限制 (2026-06-10)** — 超过 2000 字符返回 400。
+- **ChatWindow 错误回滚 (2026-06-10)** — API 返回错误时从 UI 移除乐观插入的消息，显示内联错误提示而非 `alert()`。
 
 ### Environment Variables
 
@@ -109,7 +111,17 @@ if (proxyUrl) { setGlobalDispatcher(new ProxyAgent({ uri: proxyUrl })); }
 
 此文件在 `src/lib/auth.ts` 第一行 import（必须在 BetterAuth 之前，确保 Google OAuth HTTP 请求走代理）。Clash 代理端口 7890。
 
-### Bilingual (en/zh)
+### Login / Register
+
+登录页 (`/login`) 使用服务端组件 + 客户端表单分离模式。`src/app/login/page.tsx` 读取 cookie → 传 `lang` prop 给 `src/components/LoginForm.tsx`。
+
+**LoginForm (2026-06-10)**：完整中英双语、注册有名字字段（选填，最大 50 字符）、条款/隐私超链接可点击。
+
+`POST /api/auth/register` — 自定义注册路由：
+- 输入验证: email 格式、password ≥6 字符、name ≤50 字符
+- bcryptjs 12 rounds 哈希
+- IP 内存限流（15 分钟 5 次）
+- name 字段经 trim + 截断处理后存储
 
 语言切换流程（**2026-06-08 支持未登录用户**）：
 
@@ -233,14 +245,22 @@ Utility classes: `glass`, `glow-rose`, `text-gradient-rose`, `.particle`, `.typi
 - `next.config.js` 中 `serverComponentsExternalPackages` 包含 `node-edge-tts`, `better-auth` 等
 - webpack alias 将 `@better-auth/kysely-adapter` 指向 `src/lib/kysely-stub.js`（我们只用 Prisma，不需要真实 kysely 适配器）
 
+## Deploy
+
+**Vercel**: `https://sawylove.vercel.app`（2026-06-10 上线）
+- 环境变量配在 Vercel Dashboard → Settings → Environment Variables
+- `.npmrc` (`legacy-peer-deps=true`) 解决 Vercel 构建时 zod v3/v4 冲突
+- GitHub push → Vercel 自动部署
+
 ## Known Issues
 
 1. **角色立绘需横版场景图** — 当前 5 张是竖版肖像（4:5），Hero 轮播用 `cover` 裁切。理想情况每人增补一张横版场景图 (1920×1080) 用于 Hero。
 2. **移动端未优化** — 目标用户用手机，但响应式设计未完成。
-3. **Stripe 未配置** — 代码已就绪，缺少 Stripe Secret Key / Price ID。
+3. **Stripe 未配置** — 代码已就绪，但 `STRIPE_SECRET_KEY` 为空，`new Stripe("")` 会在调用时崩溃。**用完 Stripe 再修，目前不影响。**
 4. **Google OAuth 测试模式** — 当前在 Google Cloud Console 为 Testing 模式，上线前需 PUBLISH APP 切换到 Production。
-5. **部署后需更新** — `BETTER_AUTH_URL` 和 Google OAuth redirect URI 需更新为生产域名。`SUPABASE_URL` 在部署环境也需对应更新。
-6. **better-auth SSR 限制** — `useSession()` / `signOut` 等从 `@/lib/auth-client` 静态 import 在 Next.js dev SSR 中会触发 500。共享组件需用 props 驱动或动态 import。见 "Bilingual" 章节。
-7. **Supabase Storage bucket 需手动创建** — 首次部署或新环境需在 Supabase Dashboard 创建名为 `audio` 的公开 bucket。
-8. **存量 base64 audioUrl** — 数据库中旧消息的 audioUrl 仍为 base64 data URL 格式，新消息使用 Storage URL。如需清理历史数据可迁移，但非必须（旧消息仍可播放）。
-9. **旧 `UserMemory` 数据无 characterId** — 2026-06-08 之前的数据 `characterId = NULL`。新记忆正常写入角色隔离。旧事实会在各角色上下文中出现（因为 NULL 匹配不上任何 characterId 过滤），随新记忆增多自然覆盖。
+5. **better-auth SSR 限制** — `useSession()` / `signOut` 等从 `@/lib/auth-client` 静态 import 在 Next.js dev SSR 中会触发 500。共享组件需用 props 驱动或动态 import。见 "Bilingual" 章节。
+6. **Supabase Storage bucket 需手动创建** — 首次部署或新环境需在 Supabase Dashboard 创建名为 `audio` 的公开 bucket。
+7. **存量 base64 audioUrl** — 数据库中旧消息的 audioUrl 仍为 base64 data URL 格式，新消息使用 Storage URL。旧消息仍可播放。
+8. **旧 `UserMemory` 数据无 characterId** — 2026-06-08 之前的数据 `characterId = NULL`。新记忆正常写入角色隔离。随新记忆增多自然覆盖。
+9. **自定义域名** — `.vercel.app` 域名国内被墙，需买域名绑定才能让国内用户不翻墙访问。
+10. **Vercel 需代理访问** — 国内 `curl` 访问 Vercel 会超时，`git push` 到 GitHub 也需代理。本地 `.git/config` 已配 `http.proxy=http://127.0.0.1:7890`。
