@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
     }
   })();
 
-  // TTS — Edge-TTS is fast (~1s), synchronous is fine
+  // TTS — synchronous, Edge-TTS is fast (~1s)
   let audioUrl: string | null = null;
   try {
     audioUrl = await textToSpeech(reply, lang as "en" | "zh");

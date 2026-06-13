@@ -8,8 +8,8 @@ import { uploadAudio } from "@/lib/storage";
 const VOICE_EN = "en-US-GuyNeural";       // Natural, conversational male
 const VOICE_ZH = "zh-CN-YunyangNeural";   // 云扬 — warm, sunny male voice
 
-// Temp directory for audio files
-const TMP_DIR = join(process.cwd(), ".tmp");
+// Vercel serverless: only /tmp is writable, not process.cwd()
+const TMP_DIR = process.env.VERCEL ? "/tmp" : join(process.cwd(), ".tmp");
 if (!existsSync(TMP_DIR)) {
   try { mkdirSync(TMP_DIR, { recursive: true }); } catch {}
 }
