@@ -65,7 +65,7 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
         ? "你的对话是加密的，我们不会将你的聊天内容用于任何其他用途。"
         : "Your conversations are encrypted. We never use your chat content for any other purpose.",
     footerRights:
-      "Swaylove · All Rights Reserved",
+      "Swoonly · All Rights Reserved",
     footerPrivacy: lang === "zh" ? "隐私政策" : "Privacy Policy",
     footerTerms: lang === "zh" ? "服务条款" : "Terms of Service",
   };
@@ -176,7 +176,7 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-[var(--accent-rose)]" />
-            <span className="text-[var(--text-secondary)] text-sm font-display font-semibold">Swaylove</span>
+            <span className="text-[var(--text-secondary)] text-sm font-display font-semibold">Swoonly</span>
           </div>
           <div className="flex items-center gap-6">
             <a href="/privacy" className="text-[var(--text-muted)] text-xs hover:text-[var(--text-secondary)] transition-colors">{t.footerPrivacy}</a>

@@ -16,8 +16,8 @@ export default async function PrivacyPage() {
     title: lang === "zh" ? "隐私政策" : "Privacy Policy",
     lastUpdated: lang === "zh" ? "最后更新：2026年6月9日" : "Last updated: June 9, 2026",
     intro: lang === "zh"
-      ? "Swaylove（以下简称「我们」或「本服务」）重视您的隐私。本隐私政策说明我们如何收集、使用和保护您的个人信息。使用本服务即表示您同意本政策。"
-      : "Swaylove (\"we,\" \"us,\" or \"the Service\") values your privacy. This Privacy Policy explains how we collect, use, and protect your personal information. By using the Service, you agree to this policy.",
+      ? "Swoonly（以下简称「我们」或「本服务」）重视您的隐私。本隐私政策说明我们如何收集、使用和保护您的个人信息。使用本服务即表示您同意本政策。"
+      : "Swoonly (\"we,\" \"us,\" or \"the Service\") values your privacy. This Privacy Policy explains how we collect, use, and protect your personal information. By using the Service, you agree to this policy.",
 
     sections: [
       {
@@ -144,10 +144,10 @@ export default async function PrivacyPage() {
         title: lang === "zh" ? "9. 联系我们" : "9. Contact Us",
         content: lang === "zh"
           ? [
-              "如果您对本隐私政策有任何疑问，请发送邮件至：support@swaylove.com",
+              "如果您对本隐私政策有任何疑问，请发送邮件至：support@swoonly.online",
             ]
           : [
-              "If you have any questions about this Privacy Policy, please email: support@swaylove.com",
+              "If you have any questions about this Privacy Policy, please email: support@swoonly.online",
             ],
       },
     ],

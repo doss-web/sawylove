@@ -97,7 +97,7 @@ export default function HomeUnauthenticated({ lang }: HomeUnauthenticatedProps) 
           <div className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-[var(--accent-rose)]" />
             <span className="text-[var(--text-secondary)] text-sm font-display font-semibold">
-              Swaylove
+              Swoonly
             </span>
           </div>
           <div className="flex items-center gap-6">
@@ -109,7 +109,7 @@ export default function HomeUnauthenticated({ lang }: HomeUnauthenticatedProps) 
             </a>
           </div>
           <p className="text-[var(--text-muted)] text-xs">
-            "Swaylove · All Rights Reserved"
+            "Swoonly · All Rights Reserved"
           </p>
         </div>
       </footer>

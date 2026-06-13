@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Swaylove** — AI companion chat app for overseas markets. Women 18-25 choose from 5 preset characters, chat via text + TTS voice replies. Freemium: 50 msgs/day free, $4.99-6.99/month via Stripe. "Let your heart sway."
+**Swoonly** — AI companion chat app for overseas markets. Women 18-25 choose from 5 preset characters, chat via text + TTS voice replies. Freemium: 50 msgs/day free, $4.99-6.99/month via Stripe. "Let your heart sway."
 
 ## 技术栈
 
@@ -247,7 +247,7 @@ Utility classes: `glass`, `glow-rose`, `text-gradient-rose`, `.particle`, `.typi
 
 ## Deploy
 
-**Vercel**: `https://sawylove.vercel.app`（2026-06-10 上线）
+**Vercel**: `https://swoonly.online`（2026-06-10 上线）
 - 环境变量配在 Vercel Dashboard → Settings → Environment Variables
 - `.npmrc` (`legacy-peer-deps=true`) 解决 Vercel 构建时 zod v3/v4 冲突
 - GitHub push → Vercel 自动部署
