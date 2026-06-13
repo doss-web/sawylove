@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-});
+// baseURL intentionally omitted — client defaults to window.location.origin,
+// which automatically works across all domains (localhost, Vercel preview, production)
+export const authClient = createAuthClient();
 
 export const { signIn, signOut, useSession } = authClient;
