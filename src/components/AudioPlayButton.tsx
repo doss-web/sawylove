@@ -12,7 +12,11 @@ export default function AudioPlayButton({ audioUrl }: { audioUrl: string }) {
     audio.onerror = () => setPlaying(false);
     return () => {
       audio.pause();
-      audio.src = "";
+      audio.onended = null;
+      audio.onerror = null;
+      audio.removeAttribute("src");
+      audio.load();
+      audioRef.current = null;
     };
   }, [audioUrl]);
 

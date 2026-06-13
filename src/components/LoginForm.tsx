@@ -20,7 +20,6 @@ export default function LoginForm({ lang }: LoginFormProps) {
   const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
   const t = {
     signIn: lang === "zh" ? "登录" : "Sign In",
@@ -49,13 +48,11 @@ export default function LoginForm({ lang }: LoginFormProps) {
     regFailed: lang === "zh" ? "注册失败，请稍后重试" : "Registration failed, please try again",
     regSuccess: lang === "zh" ? "注册成功！正在跳转..." : "Account created! Redirecting...",
     somethingWrong: lang === "zh" ? "出了点问题，请重试" : "Something went wrong. Please try again.",
-    restoreSuccess: lang === "zh" ? "请检查邮箱中的重置链接" : "Check your email for a reset link",
   };
 
   const reset = () => {
     setStatus("idle");
     setError("");
-    setSuccessMsg("");
     setEmail("");
     setPassword("");
     setConfirmPassword("");
@@ -284,12 +281,6 @@ export default function LoginForm({ lang }: LoginFormProps) {
             </div>
           )}
 
-          {/* Success message */}
-          {successMsg && (
-            <div className="px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-xs text-center">
-              {successMsg}
-            </div>
-          )}
 
           <button
             type="submit"

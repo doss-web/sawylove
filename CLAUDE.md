@@ -254,13 +254,20 @@ Utility classes: `glass`, `glow-rose`, `text-gradient-rose`, `.particle`, `.typi
 
 ## Known Issues
 
-1. **角色立绘需横版场景图** — 当前 5 张是竖版肖像（4:5），Hero 轮播用 `cover` 裁切。理想情况每人增补一张横版场景图 (1920×1080) 用于 Hero。
-2. **移动端未优化** — 目标用户用手机，但响应式设计未完成。
-3. **Stripe 未配置** — 代码已就绪，但 `STRIPE_SECRET_KEY` 为空，`new Stripe("")` 会在调用时崩溃。**用完 Stripe 再修，目前不影响。**
+1. **移动端未优化** — 目标用户用手机，但响应式设计未完成。**最紧迫。**
+2. **角色立绘需横版场景图** — 当前 5 张是竖版肖像（4:5），Hero 轮播用 `cover` 裁切。理想情况每人增补一张横版场景图 (1920×1080) 用于 Hero。
+3. **Stripe 未配置** — 代码已就绪，但 `STRIPE_SECRET_KEY` 为空，`new Stripe("")` 会在调用时崩溃。**用 Stripe 时再修。**
 4. **Google OAuth 测试模式** — 当前在 Google Cloud Console 为 Testing 模式，上线前需 PUBLISH APP 切换到 Production。
-5. **better-auth SSR 限制** — `useSession()` / `signOut` 等从 `@/lib/auth-client` 静态 import 在 Next.js dev SSR 中会触发 500。共享组件需用 props 驱动或动态 import。见 "Bilingual" 章节。
-6. **Supabase Storage bucket 需手动创建** — 首次部署或新环境需在 Supabase Dashboard 创建名为 `audio` 的公开 bucket。
-7. **存量 base64 audioUrl** — 数据库中旧消息的 audioUrl 仍为 base64 data URL 格式，新消息使用 Storage URL。旧消息仍可播放。
-8. **旧 `UserMemory` 数据无 characterId** — 2026-06-08 之前的数据 `characterId = NULL`。新记忆正常写入角色隔离。随新记忆增多自然覆盖。
-9. **自定义域名** — `.vercel.app` 域名国内被墙，需买域名绑定才能让国内用户不翻墙访问。
-10. **Vercel 需代理访问** — 国内 `curl` 访问 Vercel 会超时，`git push` 到 GitHub 也需代理。本地 `.git/config` 已配 `http.proxy=http://127.0.0.1:7890`。
+5. **better-auth SSR 限制** — `useSession()` / `signOut` 等从 `@/lib/auth-client` 静态 import 在 Next.js dev SSR 中会触发 500。共享组件需用 props 驱动或动态 import。
+6. **自定义域名** — `.vercel.app` 域名国内被墙，需买域名绑定才能让国内用户不翻墙访问。
+
+### 2026-06-12 存量 Bug 修复
+
+审计 14 个问题 → 全部修复完成（除 Stripe #1 故意留着）：
+
+| # | 问题 | 修复 |
+|---|------|------|
+| 11 | `successMsg` 死代码 (LoginForm) | 移除未使用的 state + JSX + 文案 |
+| 12 | AudioPlayButton 内存泄漏 | cleanup 中清理 onended/onerror 监听器 + `removeAttribute("src")` + `load()` |
+| 13 | `alert()` 体验差 | 之前已修（改用内联 error 状态） |
+| 14 | Prisma serverless 无缓存 | 加 `log` 配置 + pgbouncer/connection_limit 注释 |
