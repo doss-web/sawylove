@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, useRef, useEffect, FormEvent } from "react";
 import { signIn } from "@/lib/auth-client";
 import { Heart } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +20,51 @@ export default function LoginForm({ lang }: LoginFormProps) {
   const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+
+  // Turnstile
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  useEffect(() => {
+    // Only load Turnstile on the register tab
+    if (tab !== "register") return;
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (!siteKey) return;
+
+    const scriptId = "cf-turnstile-script";
+    if (document.getElementById(scriptId)) {
+      // Script already loaded, render widget
+      renderWidget();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = renderWidget;
+    document.body.appendChild(script);
+
+    return () => {
+      // Turnstile cleanup handled by cf core
+    };
+
+    function renderWidget() {
+      if (!turnstileRef.current) return;
+      const w = (window as any).turnstile;
+      if (!w) return;
+      setTurnstileToken("");
+      turnstileRef.current.innerHTML = "";
+      w.render(turnstileRef.current, {
+        sitekey: siteKey,
+        theme: "dark",
+        size: "normal",
+        callback: (token: string) => setTurnstileToken(token),
+        "expired-callback": () => setTurnstileToken(""),
+      });
+    }
+  }, [tab]);
 
   const t = {
     signIn: lang === "zh" ? "登录" : "Sign In",
@@ -105,13 +150,20 @@ export default function LoginForm({ lang }: LoginFormProps) {
       return;
     }
 
+    // Turnstile verification
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (siteKey && !turnstileToken) {
+      setError(lang === "zh" ? "请完成人机验证" : "Please complete the security check");
+      return;
+    }
+
     setStatus("loading");
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password, name: name.trim() || undefined }),
+        body: JSON.stringify({ email: email.trim(), password, name: name.trim() || undefined, turnstile: turnstileToken || undefined }),
       });
       const data = await res.json();
 
@@ -271,6 +323,14 @@ export default function LoginForm({ lang }: LoginFormProps) {
                   </Link>
                 </span>
               </label>
+            </>
+          )}
+
+          {tab === "register" && (
+            <>
+              <div className="mt-4">
+                <div ref={turnstileRef} className="flex justify-center" />
+              </div>
             </>
           )}
 

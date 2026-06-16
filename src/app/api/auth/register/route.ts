@@ -32,7 +32,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email, password, name } = await req.json();
+  const { email, password, name, turnstile } = await req.json();
+
+  // Turnstile verification
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    if (!turnstile) {
+      return NextResponse.json({ error: "Security check required" }, { status: 400 });
+    }
+    const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `secret=${encodeURIComponent(turnstileSecret)}&response=${encodeURIComponent(turnstile)}`,
+    });
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success) {
+      return NextResponse.json({ error: "Security check failed. Please try again." }, { status: 400 });
+    }
+  }
 
   // Validate
   if (!email || !password) {
