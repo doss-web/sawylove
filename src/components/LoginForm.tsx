@@ -30,6 +30,8 @@ export default function LoginForm({ lang }: LoginFormProps) {
     if (tab !== "register") return;
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     if (!siteKey) return;
+    // Skip on localhost — Turnstile requires HTTPS
+    if (window.location.hostname === "localhost") return;
 
     const scriptId = "cf-turnstile-script";
     if (document.getElementById(scriptId)) {
