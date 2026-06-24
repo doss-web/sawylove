@@ -1,8 +1,13 @@
 "use client";
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { signIn } from "@/lib/auth-client";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+
+// Dynamic import to avoid SSR crash — createAuthClient() cannot run on server
+async function getSignIn() {
+  const { signIn } = await import("@/lib/auth-client");
+  return signIn;
+}
 
 type Tab = "login" | "register";
 type Status = "idle" | "loading" | "error" | "success";
@@ -118,6 +123,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
     setStatus("loading");
     setError("");
 
+    const signIn = await getSignIn();
     const result = await signIn.email({
       email: email.trim(),
       password,
@@ -176,6 +182,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
       }
 
       // Auto-login after successful registration
+      const signIn = await getSignIn();
       const result = await signIn.email({
         email: email.trim(),
         password,
@@ -194,6 +201,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
 
   const handleGoogleLogin = async () => {
     setStatus("loading");
+    const signIn = await getSignIn();
     await signIn.social({
       provider: "google",
       callbackURL: "/",
