@@ -35,7 +35,7 @@ export default function CharacterCard({
 
         {/* Name & tagline overlay */}
         <div className="absolute inset-x-0 bottom-0 p-5">
-          <h3 className="text-white font-display text-xl font-semibold drop-shadow-lg">
+          <h3 className="text-white font-display text-lg sm:text-xl font-semibold drop-shadow-lg">
             {name}
           </h3>
           <p className="text-white/70 text-sm mt-0.5 drop-shadow-md">{tagline}</p>

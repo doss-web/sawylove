@@ -110,6 +110,14 @@
   100% { opacity: 0; }
 }
 
+/* Safe area for notched iPhones */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

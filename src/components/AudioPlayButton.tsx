@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-export default function AudioPlayButton({ audioUrl }: { audioUrl: string }) {
+export default function AudioPlayButton({ audioUrl, lang = "en" }: { audioUrl: string; lang?: "en" | "zh" }) {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -35,7 +35,7 @@ export default function AudioPlayButton({ audioUrl }: { audioUrl: string }) {
   return (
     <button
       onClick={toggle}
-      aria-label={playing ? "Pause voice" : "Play voice"}
+      aria-label={playing ? (lang === "zh" ? "暂停语音" : "Pause voice") : (lang === "zh" ? "播放语音" : "Play voice")}
       className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent-rose)] transition-colors duration-200 mt-1.5 min-h-[44px] cursor-pointer"
     >
       <span
@@ -59,7 +59,7 @@ export default function AudioPlayButton({ audioUrl }: { audioUrl: string }) {
         )}
       </span>
       <span className={playing ? "text-[var(--accent-rose)]" : ""}>
-        {playing ? "Listening..." : "Tap to hear his voice"}
+        {playing ? (lang === "zh" ? "正在播放..." : "Listening...") : (lang === "zh" ? "点击听他说话" : "Tap to hear his voice")}
       </span>
     </button>
   );

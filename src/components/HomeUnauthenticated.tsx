@@ -39,8 +39,8 @@ export default function HomeUnauthenticated({ lang }: HomeUnauthenticatedProps) 
         </div>
 
         {/* Side gradient masks */}
-        <div aria-hidden="true" className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#0f0f0f]/90 to-transparent z-[1]" />
-        <div aria-hidden="true" className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0f0f0f]/90 to-transparent z-[1]" />
+        <div aria-hidden="true" className="absolute inset-y-0 left-0 w-12 sm:w-24 bg-gradient-to-r from-[#0f0f0f]/90 to-transparent z-[1]" />
+        <div aria-hidden="true" className="absolute inset-y-0 right-0 w-12 sm:w-24 bg-gradient-to-l from-[#0f0f0f]/90 to-transparent z-[1]" />
 
         {/* Bottom gradient mask */}
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[250px] bg-gradient-to-t from-[#0f0f0f] to-transparent z-[1]" />
@@ -49,7 +49,7 @@ export default function HomeUnauthenticated({ lang }: HomeUnauthenticatedProps) 
         <div aria-hidden="true" className="absolute inset-0 bg-black/40 z-[1]" />
 
         {/* Content */}
-        <div className="relative z-10 text-center max-w-2xl mx-auto px-4 py-20">
+        <div className="relative z-10 text-center max-w-2xl mx-auto px-4 py-12 sm:py-20">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--accent-rose)] to-[var(--accent-warm)] flex items-center justify-center mx-auto mb-8 shadow-[var(--glow-rose)]">
             <Heart className="w-10 h-10 text-white fill-white" />
           </div>

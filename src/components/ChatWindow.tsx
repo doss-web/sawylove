@@ -6,7 +6,7 @@ import ChatInput from "./ChatInput";
 import { Heart } from "lucide-react";
 import { SkeletonMessage } from "./Skeleton";
 
-export default function ChatWindow({ characterId, characterName }: { characterId: string; characterName: string }) {
+export default function ChatWindow({ characterId, characterName, lang = "en" }: { characterId: string; characterName: string; lang?: "en" | "zh" }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ export default function ChatWindow({ characterId, characterName }: { characterId
     } catch (err) {
       // Roll back optimistic message on network error
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      setError("Network error. Please try again.");
+      setError(lang === "zh" ? "网络错误，请重试" : "Network error. Please try again.");
       console.error("Chat error:", err);
     }
     finally { setLoading(false); }
@@ -54,8 +54,12 @@ export default function ChatWindow({ characterId, characterName }: { characterId
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent-rose)] to-[var(--accent-warm)] flex items-center justify-center mb-5 shadow-[var(--glow-rose)]">
               <Heart className="w-10 h-10 text-white fill-white" />
             </div>
-            <p className="font-display text-xl text-[var(--text-secondary)]">Say hello to {characterName}</p>
-            <p className="text-sm text-[var(--text-muted)] mt-2">Your first message begins something beautiful</p>
+            <p className="font-display text-lg sm:text-xl text-[var(--text-secondary)]">
+              {lang === "zh" ? `向 ${characterName} 打个招呼` : `Say hello to ${characterName}`}
+            </p>
+            <p className="text-sm text-[var(--text-muted)] mt-2">
+              {lang === "zh" ? "你的第一条消息将开启一段美好的故事" : "Your first message begins something beautiful"}
+            </p>
           </div>
         )}
         {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
@@ -67,7 +71,7 @@ export default function ChatWindow({ characterId, characterName }: { characterId
         {loading && <SkeletonMessage />}
         <div ref={bottomRef} />
       </div>
-      <ChatInput onSend={sendMessage} disabled={loading} />
+      <ChatInput onSend={sendMessage} disabled={loading} lang={lang} />
     </div>
   );
 }

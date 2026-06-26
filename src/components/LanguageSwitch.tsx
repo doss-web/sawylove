@@ -27,7 +27,7 @@ export default function LanguageSwitch({ lang = "en", loggedIn = false }: Langua
   return (
     <button
       onClick={toggleLang}
-      className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] px-3 py-1.5 rounded-full border border-[var(--border-subtle)] glass text-sm transition-colors duration-200 cursor-pointer"
+      className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] px-3 py-2 rounded-full border border-[var(--border-subtle)] glass text-sm transition-colors duration-200 cursor-pointer min-h-[44px]"
     >
       {lang === "en" ? "中文" : "English"}
     </button>

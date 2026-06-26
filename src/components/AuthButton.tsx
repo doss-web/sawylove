@@ -7,7 +7,15 @@ interface AuthButtonProps {
   userName?: string | null;
 }
 
-export default function AuthButton({ loggedIn, userName }: AuthButtonProps) {
+const t = (lang: "en" | "zh", key: "signIn" | "signOut") => {
+  const map = {
+    signIn: { en: "Sign In", zh: "登录" },
+    signOut: { en: "Sign Out", zh: "退出" },
+  };
+  return map[key][lang];
+};
+
+export default function AuthButton({ lang = "en", loggedIn, userName }: AuthButtonProps) {
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -28,9 +36,9 @@ export default function AuthButton({ loggedIn, userName }: AuthButtonProps) {
         )}
         <button
           onClick={handleSignOut}
-          className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-rose)] transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-rose)] transition-colors min-h-[44px] px-2"
         >
-          Sign Out
+          {t(lang, "signOut")}
         </button>
       </div>
     );
@@ -39,9 +47,9 @@ export default function AuthButton({ loggedIn, userName }: AuthButtonProps) {
   return (
     <button
       onClick={() => router.push("/login")}
-      className="px-5 py-2 rounded-full bg-gradient-to-r from-[var(--accent-rose)] to-[var(--accent-warm)] text-white text-sm font-medium hover:shadow-[var(--glow-rose)] transition-shadow duration-200 cursor-pointer"
+      className="px-4 sm:px-5 py-2.5 rounded-full bg-gradient-to-r from-[var(--accent-rose)] to-[var(--accent-warm)] text-white text-sm font-medium hover:shadow-[var(--glow-rose)] transition-shadow duration-200 cursor-pointer min-h-[44px]"
     >
-      Sign In
+      {t(lang, "signIn")}
     </button>
   );
 }

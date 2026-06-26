@@ -220,7 +220,7 @@ export default function LoginForm({ lang }: LoginFormProps) {
       <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full bg-[var(--accent-rose)]/5 blur-[120px]" />
       <div className="absolute bottom-1/3 right-1/3 w-80 h-80 rounded-full bg-[var(--accent-gold)]/5 blur-[120px]" />
 
-      <div className="relative glass p-8 rounded-3xl max-w-sm w-full mx-4 shadow-[var(--glow-rose)]">
+      <div className="relative glass p-6 sm:p-8 rounded-3xl max-w-sm w-full mx-4 shadow-[var(--glow-rose)]">
         {/* Logo + Home link */}
         <Link href="/" className="block w-fit mx-auto">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--accent-rose)] to-[var(--accent-warm)] flex items-center justify-center mb-5 shadow-lg shadow-[var(--accent-rose)]/20">

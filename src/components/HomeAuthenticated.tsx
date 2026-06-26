@@ -92,12 +92,12 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
             />
           ))}
         </div>
-        <div aria-hidden="true" className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#0f0f0f]/90 to-transparent z-[1]" />
-        <div aria-hidden="true" className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#0f0f0f]/90 to-transparent z-[1]" />
+        <div aria-hidden="true" className="absolute inset-y-0 left-0 w-12 sm:w-24 bg-gradient-to-r from-[#0f0f0f]/90 to-transparent z-[1]" />
+        <div aria-hidden="true" className="absolute inset-y-0 right-0 w-12 sm:w-24 bg-gradient-to-l from-[#0f0f0f]/90 to-transparent z-[1]" />
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[250px] bg-gradient-to-t from-[#0f0f0f] to-transparent z-[1]" />
         <div aria-hidden="true" className="absolute inset-0 bg-black/45 z-[1]" />
 
-        <div className="relative z-10 text-center max-w-3xl mx-auto px-4 py-20">
+        <div className="relative z-10 text-center max-w-3xl mx-auto px-4 py-12 sm:py-20">
           <h1 className="font-display font-bold text-white mb-6 tracking-tight leading-tight drop-shadow-lg" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
             {t.heroTitle}
           </h1>
@@ -115,8 +115,8 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
       </section>
 
       {/* Character Grid */}
-      <section className="max-w-6xl mx-auto px-4 pb-20">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+      <section className="max-w-6xl mx-auto px-4 pb-12 sm:pb-20">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
           {characters.map((c) => (
             <CharacterCard key={c.slug} character={c} lang={lang} />
           ))}
@@ -124,8 +124,8 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
       </section>
 
       {/* Features */}
-      <section className="max-w-4xl mx-auto px-4 pb-24">
-        <h2 className="font-display font-bold text-[var(--text-primary)] text-center mb-14" style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}>
+      <section className="max-w-4xl mx-auto px-4 pb-12 sm:pb-24">
+        <h2 className="font-display font-bold text-[var(--text-primary)] text-center mb-8 sm:mb-14" style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}>
           {t.featuresTitle}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -154,7 +154,7 @@ export default function HomeAuthenticated({ characters, lang }: HomeAuthenticate
       </section>
 
       {/* FAQ */}
-      <section className="max-w-2xl mx-auto px-4 pb-24">
+      <section className="max-w-2xl mx-auto px-4 pb-12 sm:pb-24">
         <h2 className="font-display font-bold text-[var(--text-primary)] text-center mb-10" style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}>{t.faqTitle}</h2>
         <div className="divide-y divide-[var(--border-subtle)]">
           {[[t.faq1Q, t.faq1A], [t.faq2Q, t.faq2A], [t.faq3Q, t.faq3A], [t.faq4Q, t.faq4A]].map(([q, a], i) => (

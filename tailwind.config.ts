@@ -4,6 +4,10 @@ const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["var(--font-display)", "sans-serif"],
+        body: ["var(--font-body)", "sans-serif"],
+      },
       colors: {
         rose: {
           50: "#fff1f2",
@@ -21,6 +25,7 @@ const config: Config = {
       },
     },
   },
+  safelist: ["h-dvh"],
   plugins: [],
 };
 export default config;

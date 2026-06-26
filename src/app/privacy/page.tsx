@@ -157,15 +157,15 @@ export default async function PrivacyPage() {
     <div className="min-h-screen flex flex-col">
       <PageHeader lang={lang} loggedIn={!!session} userName={session?.user?.name} />
 
-      <main className="flex-1 max-w-2xl mx-auto px-4 py-16 w-full">
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-8 sm:py-16 w-full">
         <h1 className="font-display font-bold text-[var(--text-primary)] mb-2" style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}>
           {t.title}
         </h1>
-        <p className="text-[var(--text-muted)] text-sm mb-10">{t.lastUpdated}</p>
+        <p className="text-[var(--text-muted)] text-sm mb-6 sm:mb-10">{t.lastUpdated}</p>
 
-        <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-10">{t.intro}</p>
+        <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6 sm:mb-10">{t.intro}</p>
 
-        <div className="space-y-10">
+        <div className="space-y-6 sm:space-y-10">
           {t.sections.map((section, i) => (
             <section key={i}>
               <h2 className="font-display font-semibold text-[var(--text-primary)] text-base mb-3">
@@ -180,7 +180,7 @@ export default async function PrivacyPage() {
           ))}
         </div>
 
-        <div className="mt-16 pt-8 border-t border-[var(--border-subtle)]">
+        <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-[var(--border-subtle)]">
           <Link
             href="/"
             className="text-sm text-[var(--accent-rose)] hover:text-[var(--accent-warm)] transition-colors"

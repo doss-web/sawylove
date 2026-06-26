@@ -12,15 +12,15 @@ export default function SubscribeBanner({ remaining, lang }: { remaining: number
   };
 
   return (
-    <div className="bg-rose-50 border-b border-rose-100 px-4 py-2 text-center text-sm">
+    <div className="bg-[var(--accent-rose)]/10 border-b border-[var(--accent-rose)]/20 px-4 py-2.5 text-center text-sm">
       {lang === "zh" ? (
         <>今日剩余 <strong>{remaining}</strong> 条消息。{" "}
-          <button onClick={handleSubscribe} className="text-rose-500 font-semibold hover:underline">
+          <button onClick={handleSubscribe} className="text-[var(--accent-rose)] font-semibold hover:text-[var(--accent-warm)] transition-colors min-h-[44px]">
             订阅无限畅聊 →
           </button></>
       ) : (
         <><strong>{remaining}</strong> messages remaining today.{" "}
-          <button onClick={handleSubscribe} className="text-rose-500 font-semibold hover:underline">
+          <button onClick={handleSubscribe} className="text-[var(--accent-rose)] font-semibold hover:text-[var(--accent-warm)] transition-colors min-h-[44px]">
             Subscribe for unlimited →
           </button></>
       )}

@@ -17,14 +17,14 @@ export default async function ChatPage({ params }: { params: { characterId: stri
   const lang = (session?.user as any)?.language === "zh" ? "zh" : "en";
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <ChatHeader
         slug={character.slug}
         nameEn={character.nameEn}
         nameZh={character.nameZh}
         lang={lang}
       />
-      <ChatWindow characterId={params.characterId} characterName={character.nameEn} />
+      <ChatWindow characterId={params.characterId} characterName={character.nameEn} lang={lang} />
     </div>
   );
 }

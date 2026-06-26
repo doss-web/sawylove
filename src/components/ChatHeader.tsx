@@ -23,7 +23,7 @@ export default function ChatHeader({ slug, nameEn, nameZh, lang }: ChatHeaderPro
         <span className="font-medium text-[var(--text-primary)]">{name}</span>
         <div className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-          <span className="text-[10px] text-[var(--text-muted)]">Online</span>
+          <span className="text-[11px] text-[var(--text-muted)]">{lang === "zh" ? "在线" : "Online"}</span>
         </div>
       </div>
     </header>
